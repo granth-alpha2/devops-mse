@@ -1,0 +1,119 @@
+services:
+  # MongoDB database
+  mongodb:
+    image: mongo:6.0
+    container_name: netflix-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: netflix-backend
+    environment:
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/netflix?authSource=admin
+      JWT_SECRET: netflix-secret
+      PORT: 5000
+      DEMO_USER_NAME: Netflix Demo User
+      DEMO_USER_EMAIL: demo@netflix.local
+      DEMO_USER_PASSWORD: demo123
+      DEMO_USER_TIER: premium
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: ../docker/Dockerfile.auth
+    container_name: netflix-auth
+    environment:
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/netflix-auth?authSource=admin
+      JWT_SECRET: netflix-auth-secret
+      PORT: 5001
+    ports:
+      - "5001:5001"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Video Service
+  video-service:
+    build:
+      context: ./video-service
+      dockerfile: ../docker/Dockerfile.video
+    container_name: netflix-video
+    environment:
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/netflix-videos?authSource=admin
+      PORT: 5002
+    ports:
+      - "5002:5002"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: netflix-frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_DEMO_USER_EMAIL: demo@netflix.local
+      REACT_APP_DEMO_USER_PASSWORD: demo123
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Prometheus (Monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: netflix-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  # Grafana (Dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: netflix-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  mongodb_data:
+  prometheus_data:
+  grafana_data:

@@ -1,0 +1,77 @@
+name: Infrastructure Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+
+jobs:
+  terraform-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+      
+      - name: Terraform Format
+        run: terraform fmt -check -recursive terraform/
+      
+      - name: Terraform Init
+        run: cd terraform && terraform init -backend=false
+      
+      - name: Terraform Validate
+        run: cd terraform && terraform validate
+      
+      - name: TFLint
+        uses: terraform-linters/setup-tflint@v3
+      
+      - name: Run TFLint
+        run: |
+          cd terraform
+          tflint --init
+          tflint
+
+  terraform-plan:
+    if: github.event_name == 'pull_request'
+    needs: terraform-validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Terraform Plan
+        run: |
+          cd terraform
+          terraform init
+          terraform plan -out=tfplan
+      
+      - name: Comment PR with plan
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = 'Plan output here'; // Read from file
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Plan\n\`\`\`${plan}\`\`\``
+            });

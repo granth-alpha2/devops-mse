@@ -1,0 +1,74 @@
+---
+# Ingress for API Gateway
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netflix-ingress
+  namespace: netflix-devops
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: netflix.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: netflix-frontend
+            port:
+              number: 80
+      - path: /api/auth
+        pathType: Prefix
+        backend:
+          service:
+            name: netflix-backend
+            port:
+              number: 5000
+      - path: /api/videos
+        pathType: Prefix
+        backend:
+          service:
+            name: netflix-video
+            port:
+              number: 5002
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: netflix-backend
+            port:
+              number: 5000
+
+---
+# Network Policy for pod-to-pod communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: netflix-network-policy
+  namespace: netflix-devops
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: netflix-devops
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: netflix-devops
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
