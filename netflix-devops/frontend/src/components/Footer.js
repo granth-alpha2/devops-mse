@@ -5,41 +5,40 @@ export const Footer = () => {
     <footer className="footer">
       <div className="footer-container">
         <div className="footer-section">
-          <h4>🎬 StreamFlix Premium</h4>
-          <p>Next-generation streaming platform powered by DevOps excellence</p>
+          <h4>Questions? Contact us.</h4>
+          <p>Ready to watch? Enter your email to create or restart your membership.</p>
         </div>
         
         <div className="footer-section">
-          <h5>Quick Links</h5>
+          <h5>FAQ</h5>
           <ul>
-            <li><a href="#home">Home</a></li>
-            <li><a href="#browse">Browse</a></li>
-            <li><a href="#about">About</a></li>
+            <li><a href="#faq">What is Netflix?</a></li>
+            <li><a href="#faq">How much does Netflix cost?</a></li>
+            <li><a href="#faq">Where can I watch?</a></li>
           </ul>
         </div>
         
         <div className="footer-section">
-          <h5>Technology</h5>
+          <h5>Help Center</h5>
           <ul>
-            <li>React 18 + Modern Web APIs</li>
-            <li>Node.js + Express Backend</li>
-            <li>MongoDB Database</li>
-            <li>Docker & Kubernetes</li>
+            <li><a href="#help">Account</a></li>
+            <li><a href="#help">Media Center</a></li>
+            <li><a href="#help">Investor Relations</a></li>
           </ul>
         </div>
         
         <div className="footer-section">
-          <h5>Connect</h5>
+          <h5>Account</h5>
           <ul>
-            <li><a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-            <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a></li>
-            <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+            <li><a href="#account">Redeem gift cards</a></li>
+            <li><a href="#account">Privacy</a></li>
+            <li><a href="#account">Speed Test</a></li>
           </ul>
         </div>
       </div>
       
       <div className="footer-bottom">
-        <p>&copy; 2026 StreamFlix. All rights reserved. | DevOps Demo Project</p>
+        <p>&copy; 1997-2026 Netflix, Inc.</p>
       </div>
     </footer>
   );

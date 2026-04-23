@@ -14,6 +14,7 @@ function App() {
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
   const DEMO_CREDENTIALS = {
@@ -23,6 +24,12 @@ function App() {
 
   useEffect(() => {
     initializeApp();
+
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const initializeApp = async () => {
@@ -66,20 +73,26 @@ function App() {
   const fetchVideos = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await axios.get(`${API_URL}/videos`, {
         params: { limit: 20 },
         timeout: 10000
       });
       
       const videoData = response.data.data || response.data;
-      setVideos(Array.isArray(videoData) ? videoData : []);
+      const videosArray = Array.isArray(videoData) ? videoData : [];
       
-      if (Array.isArray(videoData) && videoData.length === 0) {
-        setError('No videos available. Please try again later.');
+      setVideos(videosArray);
+      
+      if (videosArray.length === 0) {
+        setError('No videos available right now. Our catalog is being updated.');
+      } else {
+        setError(null);
       }
     } catch (err) {
       console.error('Failed to load videos:', err);
-      setError('Failed to load videos. Please try again later.');
+      setVideos([]);
+      setError('Unable to load videos. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -88,6 +101,10 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getFilteredVideos = () => {
@@ -117,6 +134,9 @@ function App() {
     { id: 'animation', label: 'Animation', icon: '🎨' },
     { id: 'adventure', label: 'Adventure', icon: '🗺️' },
     { id: 'comedy', label: 'Comedy', icon: '😂' },
+    { id: 'thriller', label: 'Thriller', icon: '🔪' },
+    { id: 'horror', label: 'Horror', icon: '👻' },
+    { id: 'romance', label: 'Romance', icon: '💕' },
   ];
 
   return (
@@ -129,7 +149,7 @@ function App() {
           {error && (
             <div className="error-banner">
               <span>⚠️ {error}</span>
-              <button onClick={() => setError(null)}>Dismiss</button>
+              <button onClick={() => { setError(null); fetchVideos(); }}>Retry</button>
             </div>
           )}
 
@@ -162,6 +182,15 @@ function App() {
       </section>
 
       <Footer />
+
+      <button
+        className={`scroll-to-top ${showScrollTop ? 'visible' : ''}`}
+        onClick={scrollToTop}
+        title="Back to top"
+        aria-label="Scroll to top"
+      >
+        ↑
+      </button>
     </div>
   );
 }

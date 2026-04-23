@@ -24,6 +24,8 @@ metadata:
   name: netflix-secrets
   namespace: netflix-devops
 type: Opaque
+# NOTE: In production, use sealed-secrets or external secrets manager
+# These plaintext values are for demo/development only
 stringData:
   mongodb-uri: "mongodb://admin:password@mongodb:27017/netflix"
   jwt-secret: "netflix-secret-key-change-in-production"
@@ -54,7 +56,12 @@ spec:
       labels:
         app: netflix-backend
         version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
     spec:
+      terminationGracePeriodSeconds: 30
       containers:
       - name: backend
         image: netflix-backend:latest
@@ -159,3 +166,16 @@ spec:
       target:
         type: Utilization
         averageUtilization: 80
+
+---
+# PodDisruptionBudget for high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: netflix-backend-pdb
+  namespace: netflix-devops
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: netflix-backend

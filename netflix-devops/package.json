@@ -1,0 +1,48 @@
+{
+  "name": "netflix-devops",
+  "version": "1.0.0",
+  "description": "Netflix-like streaming application with DevOps infrastructure",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/auth-service\" \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\" \"npm run dev --workspace=apps/video-service\"",
+    "build": "npm run build --workspace=apps/auth-service && npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend && npm run build --workspace=apps/video-service",
+    "test": "npm run test --workspace=apps/auth-service && npm run test --workspace=apps/backend && npm run test --workspace=apps/frontend && npm run test --workspace=apps/video-service",
+    "test:coverage": "npm run test:coverage --workspace=*",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "k8s:apply": "kubectl apply -f infrastructure/kubernetes/",
+    "k8s:delete": "kubectl delete -f infrastructure/kubernetes/",
+    "k8s:status": "kubectl get pods,svc,deployments",
+    "tf:init": "cd infrastructure/terraform && terraform init",
+    "tf:plan": "cd infrastructure/terraform && terraform plan",
+    "tf:apply": "cd infrastructure/terraform && terraform apply",
+    "tf:destroy": "cd infrastructure/terraform && terraform destroy",
+    "lint": "npm run lint --workspace=*",
+    "format": "npm run format --workspace=*"
+  },
+  "workspaces": [
+    "apps/auth-service",
+    "apps/backend",
+    "apps/frontend",
+    "apps/video-service"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "devops",
+    "microservices",
+    "kubernetes",
+    "docker",
+    "netflix",
+    "streaming"
+  ],
+  "author": "DevOps Team",
+  "license": "MIT"
+}

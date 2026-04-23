@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const axios = require('axios');
 const path = require('path');
 const prometheus = require('./middleware/prometheus');
 const logger = require('./middleware/logger');
@@ -61,74 +60,20 @@ async function seedDemoUser() {
   }
 }
 
-// TMDB API function to get trailer URLs
-async function getTrailerUrl(movieTitle, year = null) {
-  try {
-    // TMDB API key - using a demo key (replace with your own for production)
-    const TMDB_API_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4ZjQ4ZjQ4ZjQ4ZjQ4ZjQ4ZjQ4ZjQ4ZjQ4ZjQ4ZjQ4ZiIsInN1YiI6IjEyMzQ1Njc4OTAiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.example';
-
-    // Search for the movie
-    const searchResponse = await axios.get(`https://api.themoviedb.org/3/search/movie`, {
-      params: {
-        api_key: TMDB_API_KEY,
-        query: movieTitle,
-        year: year
-      }
-    });
-
-    if (searchResponse.data.results.length === 0) {
-      console.log(`No results found for ${movieTitle}`);
-      return null;
-    }
-
-    const movieId = searchResponse.data.results[0].id;
-
-    // Get movie videos (trailers)
-    const videosResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}/videos`, {
-      params: {
-        api_key: TMDB_API_KEY
-      }
-    });
-
-    // Find the best trailer (prefer YouTube, then Vimeo)
-    const trailers = videosResponse.data.results.filter(video =>
-      video.type === 'Trailer' && (video.site === 'YouTube' || video.site === 'Vimeo')
-    );
-
-    if (trailers.length === 0) {
-      console.log(`No trailers found for ${movieTitle}`);
-      return null;
-    }
-
-    const bestTrailer = trailers[0];
-    let trailerUrl;
-
-    if (bestTrailer.site === 'YouTube') {
-      trailerUrl = `https://www.youtube.com/watch?v=${bestTrailer.key}`;
-    } else if (bestTrailer.site === 'Vimeo') {
-      trailerUrl = `https://vimeo.com/${bestTrailer.key}`;
-    }
-
-    console.log(`Found trailer for ${movieTitle}: ${trailerUrl}`);
-    return trailerUrl;
-
-  } catch (error) {
-    console.error(`Error fetching trailer for ${movieTitle}:`, error.message);
-    return null;
-  }
-}
-
 async function seedVideos() {
   try {
-    // Remove existing videos and reseed with new URLs
-    await Video.deleteMany({});
-    console.log('Removed existing videos');
+    // Only seed if the collection is empty — don't wipe on every restart
+    const existingCount = await Video.countDocuments();
+    if (existingCount > 0) {
+      console.log(`Video catalog already has ${existingCount} videos, skipping seed.`);
+      return;
+    }
 
     const sampleVideos = [
       {
         title: 'Oppenheimer',
         description: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g1" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FFD700;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23CC0000;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g1)" /%3E%3Ctext x="50%25" y="50%25" font-size="32" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EOppenheimer%3C/text%3E%3Ctext x="50%25" y="70%25" font-size="16" fill="rgba(255,255,255,0.8)" text-anchor="middle" font-family="Arial"%3E⭐ 8.5 Drama%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -138,12 +83,13 @@ async function seedVideos() {
         duration: 150,
         genre: 'Drama, Biography, History',
         rating: 8.5,
+        year: 2023,
         views: 5200000
       },
       {
         title: 'Avatar: The Way of Water',
         description: 'Jake Sully and his family must escape the Pandoran colonists on the lush moon. They explore the world of the ocean and its wonders.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g2" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%230099FF;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23001155;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g2)" /%3E%3Ctext x="50%25" y="50%25" font-size="32" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EAvatar%3C/text%3E%3Ctext x="50%25" y="70%25" font-size="16" fill="rgba(255,255,255,0.8)" text-anchor="middle" font-family="Arial"%3E⭐ 7.9 Sci-Fi%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -153,12 +99,13 @@ async function seedVideos() {
         duration: 192,
         genre: 'Sci-Fi, Action, Adventure',
         rating: 7.9,
+        year: 2022,
         views: 8900000
       },
       {
         title: 'Killers of the Flower Moon',
         description: 'When oil is discovered beneath their land, the Osage people are murdered one by one. An FBI agent investigates these mysterious deaths.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g3" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23990000;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23330000;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g3)" /%3E%3Ctext x="50%25" y="50%25" font-size="28" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EKillers of%3C/text%3E%3Ctext x="50%25" y="65%25" font-size="28" fill="white" text-anchor="middle" font-weight="bold" font-family="Arial"%3EThe Flower Moon%3C/text%3E%3Ctext x="50%25" y="85%25" font-size="16" fill="rgba(255,255,255,0.8)" text-anchor="middle" font-family="Arial"%3E⭐ 8.3 Crime%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXznH.jpg',
         url: 'https://www.w3schools.com/html/movie.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -168,12 +115,13 @@ async function seedVideos() {
         duration: 206,
         genre: 'Crime, Drama, History',
         rating: 8.3,
+        year: 2023,
         views: 3400000
       },
       {
         title: 'Barbie',
         description: 'Barbie and Ken escape from the perfect world of Barbie Land and enter the real world. They discover what happens when they exist outside their universe.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g4" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FF1493;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23FF69B4;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g4)" /%3E%3Ctext x="50%25" y="50%25" font-size="42" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EBarbie%3C/text%3E%3Ctext x="50%25" y="70%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 7.8 Comedy%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -183,12 +131,13 @@ async function seedVideos() {
         duration: 114,
         genre: 'Comedy, Fantasy',
         rating: 7.8,
+        year: 2023,
         views: 9100000
       },
       {
         title: 'Dune: Part Two',
         description: 'Paul Atreides must travel to the dangerous desert planet Arrakis to ensure the future of his family. Epic space opera with stunning visuals.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g5" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FFB74D;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23CC7722;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g5)" /%3E%3Ctext x="50%25" y="50%25" font-size="42" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EDune%3C/text%3E%3Ctext x="50%25" y="70%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 8.1 Sci-Fi%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -198,12 +147,13 @@ async function seedVideos() {
         duration: 166,
         genre: 'Sci-Fi, Action, Adventure',
         rating: 8.1,
+        year: 2024,
         views: 7300000
       },
       {
         title: 'Mission: Impossible - Dead Reckoning',
         description: 'Ethan Hunt and his team take on their most dangerous mission yet against an artificial intelligence threat to humanity.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g6" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23333333;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23FF0000;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g6)" /%3E%3Ctext x="50%25" y="40%25" font-size="32" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EMission:%3C/text%3E%3Ctext x="50%25" y="55%25" font-size="32" fill="white" text-anchor="middle" font-weight="bold" font-family="Arial"%3EImpossible%3C/text%3E%3Ctext x="50%25" y="75%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 7.6 Action%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/NNxYkU70HPurnNCSiCjYdd9hzW.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -213,12 +163,13 @@ async function seedVideos() {
         duration: 163,
         genre: 'Action, Adventure, Thriller',
         rating: 7.6,
+        year: 2023,
         views: 4800000
       },
       {
         title: 'Aquaman and the Lost Kingdom',
         description: 'Aquaman must unite the kingdoms of the sea to prevent an ancient enemy from destroying the world above and below the oceans.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g7" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%2300CCFF;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23006699;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g7)" /%3E%3Ctext x="50%25" y="50%25" font-size="36" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EAquaman%3C/text%3E%3Ctext x="50%25" y="70%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 6.9 Action%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/7lTnXOy0iNtMiIRjlFj8bQ3ZJJg.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -228,12 +179,13 @@ async function seedVideos() {
         duration: 124,
         genre: 'Action, Adventure, Fantasy',
         rating: 6.9,
+        year: 2023,
         views: 5100000
       },
       {
         title: 'The Hunger Games: Ballad of Songbirds',
         description: 'A young Coriolanus Snow becomes the mentor for a female tribute in the tenth Hunger Games tournament.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g8" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FFD700;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23664400;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g8)" /%3E%3Ctext x="50%25" y="40%25" font-size="28" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EThe Hunger%3C/text%3E%3Ctext x="50%25" y="55%25" font-size="28" fill="white" text-anchor="middle" font-weight="bold" font-family="Arial"%3EGames%3C/text%3E%3Ctext x="50%25" y="75%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 7.7 Action%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/eaiUgfhYPqqYD5bBghpL7V9XCqL.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -243,12 +195,13 @@ async function seedVideos() {
         duration: 157,
         genre: 'Action, Adventure, Drama, Sci-Fi',
         rating: 7.7,
+        year: 2023,
         views: 6200000
       },
       {
         title: 'Fast X',
         description: 'Dom Toretto and his crew face off against a cunning new adversary who emerges from the shadows of their past.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g9" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FF2020;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23000000;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g9)" /%3E%3Ctext x="50%25" y="50%25" font-size="52" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EFastX%3C/text%3E%3Ctext x="50%25" y="70%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 6.5 Action%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/fiVW06jE7z9YnO4trhaMEdclSiC.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -258,12 +211,13 @@ async function seedVideos() {
         duration: 141,
         genre: 'Action, Crime, Thriller',
         rating: 6.5,
+        year: 2023,
         views: 8700000
       },
       {
         title: 'Inside Out 2',
         description: 'Riley enters her teenage years, and her emotions must adjust to her changing emotions and experiences of growing up.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g10" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%236B4DE6;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23E67E22;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g10)" /%3E%3Ctext x="50%25" y="50%25" font-size="36" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EInside Out2%3C/text%3E%3Ctext x="50%25" y="70%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 8.2 Animation%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -273,12 +227,13 @@ async function seedVideos() {
         duration: 96,
         genre: 'Animation, Adventure, Comedy',
         rating: 8.2,
+        year: 2024,
         views: 7900000
       },
       {
         title: 'Dungeons & Dragons: Honor Among Thieves',
         description: 'A ragtag group of thieves must embark on an epic adventure to recover a magical artifact and save the kingdom.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g11" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23884422;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23222200;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g11)" /%3E%3Ctext x="50%25" y="40%25" font-size="28" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3EDungeons %26%3C/text%3E%3Ctext x="50%25" y="55%25" font-size="28" fill="white" text-anchor="middle" font-weight="bold" font-family="Arial"%3EDragons%3C/text%3E%3Ctext x="50%25" y="75%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 6.8 Fantasy%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/A7AoNT06aRAc4SV89Dwxj3EYAgC.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -288,12 +243,13 @@ async function seedVideos() {
         duration: 134,
         genre: 'Action, Adventure, Comedy, Fantasy',
         rating: 6.8,
+        year: 2023,
         views: 3200000
       },
       {
         title: 'Spider-Man: Across the Spider-Verse',
         description: 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.',
-        thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Cdefs%3E%3ClinearGradient id="g12" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FF0000;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23000080;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="225" fill="url(%23g12)" /%3E%3Ctext x="50%25" y="40%25" font-size="32" fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-family="Arial"%3ESpider-Man:%3C/text%3E%3Ctext x="50%25" y="55%25" font-size="32" fill="white" text-anchor="middle" font-weight="bold" font-family="Arial"%3EMultiverse%3C/text%3E%3Ctext x="50%25" y="75%25" font-size="16" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial"%3E⭐ 8.6 Animation%3C/text%3E%3C/svg%3E',
+        thumbnail: 'https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -303,6 +259,7 @@ async function seedVideos() {
         duration: 140,
         genre: 'Animation, Action, Adventure, Sci-Fi',
         rating: 8.6,
+        year: 2023,
         views: 6450000
       }
     ];
@@ -315,22 +272,46 @@ async function seedVideos() {
 }
 
 // Middleware
+const allowedOrigins = process.env.CORS_ORIGIN || '*';
 app.use(cors({
-  origin: '*',
+  origin: allowedOrigins === '*' ? '*' : allowedOrigins.split(','),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false,
+  credentials: allowedOrigins !== '*',
   optionsSuccessStatus: 200
 }));
-app.use(logger); // Add logging middleware
-app.use(express.json());
+app.use(logger);
+app.use(express.json({ limit: '10mb' }));
 app.use(prometheus.httpRequestDurationMicroseconds);
 
-// Video CORS and streaming headers
+// Rate limiting
+let rateLimit;
+try {
+  rateLimit = require('express-rate-limit');
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 200, // limit each IP to 200 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+  });
+  app.use('/api/', limiter);
+  console.log('Rate limiting enabled');
+} catch (e) {
+  console.log('express-rate-limit not installed, skipping rate limiting');
+}
+
+// Security headers
+try {
+  const helmet = require('helmet');
+  app.use(helmet({ contentSecurityPolicy: false }));
+  console.log('Helmet security headers enabled');
+} catch (e) {
+  console.log('helmet not installed, skipping security headers');
+}
+
+// Streaming headers
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Range');
   res.header('Accept-Ranges', 'bytes');
   next();
 });
@@ -339,10 +320,7 @@ app.use((req, res, next) => {
 app.use('/videos', express.static(path.join(__dirname, '../public/videos')));
 
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/netflix', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/netflix')
 .then(async () => {
   console.log('MongoDB connected');
   await seedDemoUser();
@@ -401,13 +379,8 @@ app.get('/api/stream/:videoId', async (req, res) => {
         }
 
         const headersToForward = [
-          'content-type',
-          'content-length',
-          'content-range',
-          'accept-ranges',
-          'cache-control',
-          'etag',
-          'last-modified'
+          'content-type', 'content-length', 'content-range',
+          'accept-ranges', 'cache-control', 'etag', 'last-modified'
         ];
 
         res.status(statusCode);

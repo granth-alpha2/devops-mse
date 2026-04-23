@@ -1,18 +1,36 @@
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 COPY . .
 
-RUN mkdir -p public/videos
+# Production stage
+FROM node:18-alpine
+
+LABEL maintainer="DevOps Team"
+LABEL description="Netflix DevOps Backend API"
+
+# Security: run as non-root
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -S appuser -u 1001 -G appgroup
+
+WORKDIR /app
+
+COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appgroup /app/src ./src
+COPY --from=builder --chown=appuser:appgroup /app/package*.json ./
+
+RUN mkdir -p public/videos && chown -R appuser:appgroup public
+
+USER appuser
 
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:5000/healthz', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
-CMD ["npm", "start"]
+CMD ["node", "src/index.js"]

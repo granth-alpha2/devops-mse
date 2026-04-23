@@ -33,14 +33,14 @@ export const Hero = ({ videos }) => {
 
   return (
     <section className="hero" id="home" style={{
-      backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.7), rgba(229,9,20,0.3)), url(${featuredVideo?.thumbnail})`,
+      backgroundImage: `linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%), url(${featuredVideo?.thumbnail})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     }}>
       <div className="hero-overlay" />
       <div className="hero-content">
         <div className="hero-top">
-          <span className="hero-badge">🌟 NOW STREAMING</span>
+          <span className="hero-badge">N SERIES</span>
         </div>
         
         <h1 className="hero-title">{displayText}<span className="cursor">_</span></h1>
@@ -53,16 +53,16 @@ export const Hero = ({ videos }) => {
         
         <div className="hero-stats">
           <div className="stat-item">
-            <span className="stat-number">12+</span>
-            <span className="stat-label">Premium Titles</span>
+            <span className="stat-number">2024</span>
+            <span className="stat-label">Year</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">3</span>
-            <span className="stat-label">Quality Levels</span>
+            <span className="stat-number">TV-MA</span>
+            <span className="stat-label">Rating</span>
           </div>
           <div className="stat-item">
             <span className="stat-number">4K</span>
-            <span className="stat-label">Resolution</span>
+            <span className="stat-label">Ultra HD</span>
           </div>
         </div>
 
@@ -72,11 +72,11 @@ export const Hero = ({ videos }) => {
             onClick={() => window.scrollTo({ top: 500, behavior: 'smooth' })}
             title="Start watching now"
           >
-            ▶️ Watch Now
+            ▶️ Play
           </button>
           <button 
             className="btn-secondary"
-            onClick={() => alert('StreamFlix Premium 2026\n\n✓ 12+ Blockbuster Movies\n✓ 3D Responsive UI\n✓ Multi-Quality Streaming\n✓ Full HD/4K Support\n✓ Cloud-Native Architecture\n✓ Production-Ready DevOps')}
+            onClick={() => alert('More Info\n\n' + (featuredVideo?.description || 'Watch the latest blockbuster movies and TV shows.'))}
             title="Learn more"
           >
             ℹ️ More Info

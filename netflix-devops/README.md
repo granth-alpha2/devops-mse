@@ -1,164 +1,219 @@
-# Netflix-Style Streaming Platform with DevOps
+# 🎬 Netflix DevOps Project
 
-A scalable, microservices-based video streaming platform with full DevOps infrastructure, automated CI/CD pipelines, and Kubernetes orchestration.
+A production-grade microservices architecture implementing a Netflix-like streaming application with modern DevOps best practices.
 
-## 🎯 Overview
-
-This project demonstrates enterprise-level DevOps practices for a Netflix-like streaming service:
-
-- **Microservices Architecture**: Independent, scalable services
-- **Containerization**: Docker for consistent deployment
-- **Orchestration**: Kubernetes for auto-scaling and self-healing
-- **CI/CD**: GitHub Actions for automated testing and deployment
-- **Infrastructure as Code**: Terraform for AWS resources
-- **Monitoring & Logging**: Prometheus, Grafana, and ELK Stack
-- **Zero Downtime Deployment**: Rolling updates and health checks
-
-## 📁 Project Structure
+## 🏗️ Architecture
 
 ```
-netflix-devops/
-├── frontend/              # React web application
-├── backend/               # API gateway & main service
-├── auth-service/          # JWT authentication service
-├── video-service/         # Video streaming service
-├── docker/                # Dockerfile configurations
-├── k8s/                   # Kubernetes manifests
-├── terraform/             # AWS infrastructure
-├── monitoring/            # Prometheus & Grafana configs
-├── .github/workflows/     # CI/CD pipelines
-└── docs/                  # Documentation
+                    ┌──────────────┐
+                    │   Frontend   │ :3000
+                    │   (React)    │
+                    └──────┬───────┘
+                           │
+                    ┌──────▼───────┐
+                    │   Backend    │ :5000
+                    │  (Express)   │
+                    └──┬───────┬───┘
+                       │       │
+              ┌────────▼──┐ ┌──▼─────────┐
+              │   Auth    │ │   Video    │
+              │  Service  │ │  Service   │
+              │   :5001   │ │   :5002    │
+              └─────┬─────┘ └──┬─────────┘
+                    │          │
+                    └────┬─────┘
+                    ┌────▼─────┐
+                    │ MongoDB  │ :27017
+                    └──────────┘
+
+    Monitoring: Prometheus :9090 + Grafana :3001
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker
-- Kubernetes (minikube for local dev)
-- Terraform
-- Node.js 18+
-- Git
+- Node.js 16+
+- Docker & Docker Compose
+- kubectl (for Kubernetes deployment)
+- Terraform (for infrastructure provisioning)
 
 ### Local Development
 
-1. **Clone and Setup**
 ```bash
+# Clone and setup
+git clone <repo>
 cd netflix-devops
+cp .env.example .env
+
+# Start with Docker Compose (recommended)
+docker-compose up --build -d
+
+# Or start services individually
 npm install
-docker-compose up -d
+npm run dev
 ```
 
-2. **Start Services**
+**Access the application:**
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:5000 |
+| Auth Service | http://localhost:5001 |
+| Video Service | http://localhost:5002 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3001 |
+
+**Demo credentials:** `demo@netflix.local` / `demo123`
+
+## 📁 Project Structure
+
+```
+netflix-devops/
+├── frontend/          # React 18 UI
+├── backend/           # Express.js API gateway
+├── auth-service/      # JWT authentication service
+├── video-service/     # Video catalog & streaming
+├── docker/            # Dockerfiles (multi-stage builds)
+├── k8s/               # Kubernetes manifests
+├── terraform/         # AWS infrastructure (EKS, VPC, RDS)
+├── monitoring/        # Prometheus + Grafana configs
+├── .github/workflows/ # CI/CD pipelines
+├── docs/              # Architecture & API docs
+└── docker-compose.yml # Local dev stack
+```
+
+See [STRUCTURE.md](STRUCTURE.md) for detailed organization.
+
+## 🐳 Docker
+
+All services use **multi-stage builds** with Alpine base images and non-root users.
+
 ```bash
-# Terminal 1: Frontend
-cd frontend && npm start
-
-# Terminal 2: Backend
-cd backend && npm start
-
-# Terminal 3: Auth Service
-cd auth-service && npm start
-
-# Terminal 4: Video Service
-cd video-service && npm start
+docker-compose build        # Build all images
+docker-compose up -d        # Start all services
+docker-compose logs -f      # View logs
+docker-compose down         # Stop everything
 ```
-
-3. **Access Application**
-- Frontend: http://localhost:3000
-- API: http://localhost:5000
-- Monitoring: http://localhost:3001 (Grafana)
 
 ## ☸️ Kubernetes Deployment
 
-### Deploy to Minikube
 ```bash
+# Deploy to Minikube
 minikube start
 kubectl apply -f k8s/
 kubectl port-forward svc/netflix-frontend 3000:3000
-```
 
-### Deploy to AWS
-```bash
-cd terraform
-terraform init
-terraform plan
-terraform apply
+# Deploy to AWS EKS
+cd terraform && terraform init && terraform apply
+aws eks update-kubeconfig --name netflix-devops-cluster --region us-east-1
 kubectl apply -f k8s/
 ```
 
-## 🔄 CI/CD Pipeline
+Features: Rolling updates, HPA auto-scaling (3-10 pods), health checks, pod disruption budgets, network policies.
 
-The GitHub Actions pipeline:
-1. Runs linting and tests
-2. Builds Docker images
-3. Pushes to registry
-4. Deploys to Kubernetes
-5. Runs smoke tests
+See [k8s/README.md](k8s/README.md) for details.
 
-Push any branch and watch the pipeline in `.github/workflows/`
+## 🏗️ Infrastructure (Terraform)
+
+```bash
+npm run tf:init      # Initialize
+npm run tf:plan      # Preview changes
+npm run tf:apply     # Deploy infrastructure
+npm run tf:destroy   # Tear down
+```
+
+Provisions: VPC, EKS cluster, RDS, ALB, security groups, auto-scaling.
+
+See [terraform/README.md](terraform/README.md) for details.
 
 ## 📊 Monitoring
 
-### Prometheus
-- Metrics: http://localhost:9090
-- Queries performance and availability
+- **Prometheus** — Metrics collection from all services
+- **Grafana** — Pre-built dashboards for request rate, latency, errors
 
-### Grafana  
-- Dashboards: http://localhost:3001
-- Visualize system health
+See [monitoring/README.md](monitoring/README.md) for setup.
 
-### ELK Stack
-- Elasticsearch: Search and analyze logs
-- Kibana: Log visualization
+## 🔄 CI/CD Pipeline
+
+GitHub Actions workflows (`.github/workflows/`):
+1. **Lint & Test** — All services tested in parallel
+2. **Build** — Multi-stage Docker images with BuildKit caching
+3. **Push** — Container registry (GHCR)
+4. **Deploy** — Kubernetes rolling deployment
+5. **Security** — Trivy vulnerability scanning
+
+## 📝 API Endpoints
+
+```
+Authentication:
+  POST   /api/auth/register     # Create account
+  POST   /api/auth/login        # Sign in
+  GET    /api/auth/me           # Current user
+
+Videos:
+  GET    /api/videos            # List (paginated, filterable)
+  GET    /api/videos/:id        # Details
+  POST   /api/videos            # Create (auth required)
+  PUT    /api/videos/:id        # Update (auth required)
+  DELETE /api/videos/:id        # Delete (auth required)
+
+System:
+  GET    /api/health            # Health check
+  GET    /healthz               # Kubernetes liveness
+  GET    /readyz                # Kubernetes readiness
+  GET    /metrics               # Prometheus metrics
+```
+
+Full docs: [docs/API.md](docs/API.md)
 
 ## 🔐 Security
 
-- HTTPS/TLS encryption
-- JWT authentication
-- Kubernetes secrets for sensitive data
-- Network policies for pod isolation
-- Rate limiting and DDoS protection
+- JWT authentication with bcrypt password hashing
+- Helmet security headers
+- Rate limiting (200 req/15min per IP)
+- Non-root Docker containers
+- Kubernetes network policies & secrets
+- Trivy vulnerability scanning in CI
 
-## 📈 Features
+## 📦 Tech Stack
 
-✅ User authentication & authorization
-✅ Video browsing and discovery
-✅ Streaming with adaptive bitrate
-✅ Auto-scaling (0-1000 pods)
-✅ Self-healing infrastructure
-✅ Zero downtime deployments
-✅ Real-time monitoring
-✅ Centralized logging
-✅ Disaster recovery
-✅ Cost optimization
+| Layer | Technologies |
+|-------|-------------|
+| Frontend | React 18, CSS3, Axios |
+| Backend | Node.js, Express, MongoDB, Mongoose |
+| Auth | JWT, bcrypt |
+| Containers | Docker (multi-stage), Docker Compose |
+| Orchestration | Kubernetes (EKS), HPA, Ingress |
+| IaC | Terraform (AWS) |
+| CI/CD | GitHub Actions |
+| Monitoring | Prometheus, Grafana |
 
-## 💡 DevOps Concepts Demonstrated
+## 📖 Documentation
 
-- **Containerization**: Docker services
-- **Orchestration**: Kubernetes (Deployments, StatefulSets, Services)
-- **IaC**: Terraform AWS resources
-- **CI/CD**: GitHub Actions pipelines
-- **Monitoring**: Prometheus + Grafana
-- **Logging**: ELK Stack
-- **Auto-scaling**: HPA (Horizontal Pod Autoscaler)
-- **Service Mesh**: Optional Istio integration
-- **GitOps**: ArgoCD for continuous deployment
+- [STRUCTURE.md](STRUCTURE.md) — Project organization
+- [QUICKSTART.md](QUICKSTART.md) — Get started in 5 minutes
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Contributing guidelines
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — System design
+- [docs/API.md](docs/API.md) — API reference
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — Deployment guide
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — Common issues
 
-## 📚 Documentation
+## 🎯 Roadmap
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [API Documentation](docs/API.md)
+- [ ] Redis caching layer
+- [ ] Service mesh (Istio)
+- [ ] Distributed tracing (Jaeger)
+- [ ] Multi-region deployment
+- [ ] Cost optimization dashboards
 
-## 👥 Contributing
+## 🤝 Contributing
 
-1. Create a feature branch
-2. Make changes
-3. Push and create PR
-4. CI/CD pipeline validates
-5. Merge and auto-deploy
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-MIT
+MIT License
+
+---
+
+**Version**: 1.0.0 · **Status**: Production Ready

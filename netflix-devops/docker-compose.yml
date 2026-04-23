@@ -4,12 +4,19 @@ services:
     image: mongo:6.0
     container_name: netflix-mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - netflix-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
@@ -23,18 +30,26 @@ services:
       dockerfile: ../docker/Dockerfile.backend
     container_name: netflix-backend
     environment:
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/netflix?authSource=admin
-      JWT_SECRET: netflix-secret
+      MONGODB_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password}@mongodb:27017/netflix?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-netflix-secret}
       PORT: 5000
-      DEMO_USER_NAME: Netflix Demo User
-      DEMO_USER_EMAIL: demo@netflix.local
-      DEMO_USER_PASSWORD: demo123
-      DEMO_USER_TIER: premium
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      DEMO_USER_NAME: ${DEMO_USER_NAME:-Netflix Demo User}
+      DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-demo@netflix.local}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-demo123}
+      DEMO_USER_TIER: ${DEMO_USER_TIER:-premium}
     ports:
       - "5000:5000"
     depends_on:
       mongodb:
         condition: service_healthy
+    networks:
+      - netflix-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
     restart: unless-stopped
 
   # Auth Service
@@ -44,14 +59,21 @@ services:
       dockerfile: ../docker/Dockerfile.auth
     container_name: netflix-auth
     environment:
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/netflix-auth?authSource=admin
-      JWT_SECRET: netflix-auth-secret
+      MONGODB_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password}@mongodb:27017/netflix-auth?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-netflix-auth-secret}
       PORT: 5001
     ports:
       - "5001:5001"
     depends_on:
       mongodb:
         condition: service_healthy
+    networks:
+      - netflix-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
     restart: unless-stopped
 
   # Video Service
@@ -61,13 +83,20 @@ services:
       dockerfile: ../docker/Dockerfile.video
     container_name: netflix-video
     environment:
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/netflix-videos?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password}@mongodb:27017/netflix-videos?authSource=admin
       PORT: 5002
     ports:
       - "5002:5002"
     depends_on:
       mongodb:
         condition: service_healthy
+    networks:
+      - netflix-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
     restart: unless-stopped
 
   # Frontend
@@ -78,17 +107,24 @@ services:
     container_name: netflix-frontend
     environment:
       REACT_APP_API_URL: http://localhost:5000/api
-      REACT_APP_DEMO_USER_EMAIL: demo@netflix.local
-      REACT_APP_DEMO_USER_PASSWORD: demo123
+      REACT_APP_DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-demo@netflix.local}
+      REACT_APP_DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-demo123}
     ports:
       - "3000:3000"
     depends_on:
       - backend
+    networks:
+      - netflix-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.3'
     restart: unless-stopped
 
   # Prometheus (Monitoring)
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.51.0
     container_name: netflix-prometheus
     ports:
       - "9090:9090"
@@ -98,20 +134,39 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - netflix-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
 
   # Grafana (Dashboards)
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.4.0
     container_name: netflix-grafana
     ports:
       - "3001:3000"
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
     volumes:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+    networks:
+      - netflix-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
+
+networks:
+  netflix-network:
+    driver: bridge
 
 volumes:
   mongodb_data:

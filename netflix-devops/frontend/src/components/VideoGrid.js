@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import VideoPlayer from './VideoPlayer';
+import MovieCard from './MovieCard';
 
 export const VideoGrid = ({ videos }) => {
   const [selectedVideo, setSelectedVideo] = useState(null);
@@ -16,70 +17,111 @@ export const VideoGrid = ({ videos }) => {
     return (
       <section className="video-grid-section">
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <p style={{ fontSize: '1.2rem', color: '#d0d0d0' }}>No videos available</p>
+          <p style={{ fontSize: '1.2rem', color: '#d0d0d0' }}>Loading movies...</p>
         </div>
       </section>
     );
   }
 
+  // Organize videos into categories
+  const organizeVideos = () => {
+    const sorted = [...videos].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    return {
+      featured: videos[0],
+      trending: sorted.slice(0, 6),
+      continueWatching: videos.slice(1, 7), // Simulate continue watching
+      myList: videos.slice(2, 8), // Simulate my list
+      all: videos
+    };
+  };
+
+  const { featured, trending, continueWatching, myList, all } = organizeVideos();
+
   return (
     <>
-      <section className="video-grid-section">
-        <div className="section-header">
-          <div>
-            <span className="eyebrow">Streaming Now</span>
-            <h3>Featured Blockbusters</h3>
+      {/* Featured Movie Section */}
+      {featured && (
+        <section className="featured-section">
+          <div className="featured-movie">
+            <MovieCard
+              video={featured}
+              onWatchClick={handleWatchClick}
+              featured={true}
+            />
           </div>
-          <p className="section-copy">
-            Discover premium content with 4K quality support, multi-quality streaming, and cloud-native delivery.
-          </p>
-        </div>
+        </section>
+      )}
 
-        <div className="video-grid">
-          {videos.map((video) => (
-            <div
-              key={video._id || video.id}
-              className="video-card"
-              onClick={() => handleWatchClick(video)}
-              role="button"
-              tabIndex={0}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleWatchClick(video);
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="video-card-image">
-                <img
-                  src={video.thumbnail || 'https://via.placeholder.com/400x225/111111/ffffff?text=No+Thumbnail'}
-                  alt={video.title}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/400x225/111111/ffffff?text=No+Thumbnail';
-                  }}
-                />
-                <div className="video-card-overlay">
-                  <button
-                    className="play-button-card"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleWatchClick(video);
-                    }}
-                    aria-label={`Watch ${video.title}`}
-                  >
-                    ▶ Play
-                  </button>
-                </div>
-              </div>
-              <div className="video-card-info">
-                <h4 className="video-title">{video.title}</h4>
-                <div className="video-meta">
-                  <span className="rating">⭐ {video.rating || 'N/A'}</span>
-                  <span className="genre">{video.genre?.split(',')[0] || 'Unknown'}</span>
-                </div>
-              </div>
+      {/* Continue Watching */}
+      <section className="gallery-section">
+        <div className="gallery-header">
+          <h3>Continue Watching</h3>
+          <p>Pick up where you left off</p>
+        </div>
+        <div className="horizontal-scroll">
+          {continueWatching.map((video) => (
+            <div key={video._id || video.id} className="scroll-card-wrapper">
+              <MovieCard
+                video={video}
+                onWatchClick={handleWatchClick}
+                isShrunk={true}
+              />
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Trending Section */}
+      <section className="gallery-section">
+        <div className="gallery-header">
+          <h3>🔥 Trending Now</h3>
+          <p>The hottest content this week</p>
+        </div>
+        <div className="horizontal-scroll">
+          {trending.map((video) => (
+            <div key={video._id || video.id} className="scroll-card-wrapper">
+              <MovieCard
+                video={video}
+                onWatchClick={handleWatchClick}
+                isShrunk={true}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* My List */}
+      <section className="gallery-section">
+        <div className="gallery-header">
+          <h3>📋 My List</h3>
+          <p>Your personalized collection</p>
+        </div>
+        <div className="horizontal-scroll">
+          {myList.map((video) => (
+            <div key={video._id || video.id} className="scroll-card-wrapper">
+              <MovieCard
+                video={video}
+                onWatchClick={handleWatchClick}
+                isShrunk={true}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* All Movies Grid */}
+      <section className="gallery-section">
+        <div className="gallery-header">
+          <h3>📺 All Movies</h3>
+          <p>Browse our complete collection</p>
+        </div>
+        <div className="video-grid">
+          {all.map((video) => (
+            <MovieCard
+              key={video._id || video.id}
+              video={video}
+              onWatchClick={handleWatchClick}
+            />
           ))}
         </div>
       </section>
