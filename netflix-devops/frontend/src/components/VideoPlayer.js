@@ -1,20 +1,92 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 const VideoPlayer = ({ video, onClose }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [videoProgress, setVideoProgress] = useState(0);
+  const [currentQuality, setCurrentQuality] = useState('720p');
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     setIsPlaying(false);
     setErrorMessage('');
     setVideoProgress(0);
+    setCurrentQuality('720p');
+    setShowQualityMenu(false);
+    setVolume(1);
+    setIsMuted(false);
+    setIsFullscreen(false);
     document.body.style.overflow = 'hidden';
 
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [video]);
+
+  const getCurrentVideoUrl = () => {
+    if (video.qualities && video.qualities[currentQuality]) {
+      return video.qualities[currentQuality];
+    }
+    return video.url;
+  };
+
+  const handleQualityChange = (quality) => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const currentTime = videoElement.currentTime;
+    const wasPlaying = !videoElement.paused;
+
+    setCurrentQuality(quality);
+    setShowQualityMenu(false);
+
+    // Reload video at new quality
+    setTimeout(() => {
+      if (videoElement) {
+        videoElement.load();
+        videoElement.currentTime = currentTime;
+        if (wasPlaying) {
+          videoElement.play();
+        }
+      }
+    }, 100);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+    }
+    setIsMuted(newVolume === 0);
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      if (isMuted) {
+        videoRef.current.volume = volume;
+        setIsMuted(false);
+      } else {
+        videoRef.current.volume = 0;
+        setIsMuted(true);
+      }
+    }
+  };
 
   const handlePlayClick = () => {
     setErrorMessage('');
@@ -97,22 +169,73 @@ const VideoPlayer = ({ video, onClose }) => {
                 </div>
               </div>
             ) : (
-              <>
+              <div className="video-container" ref={containerRef}>
                 <video
+                  ref={videoRef}
                   className="video-element"
                   controls
                   autoPlay
                   playsInline
                   preload="metadata"
-                  src={video.url}
+                  src={getCurrentVideoUrl()}
                   onError={handleVideoError}
                   onLoadStart={handleLoadStart}
                   onCanPlay={handleCanPlay}
                   onTimeUpdate={handleTimeUpdate}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
                   style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000' }}
                 >
                   Your browser does not support the video tag.
                 </video>
+
+                {/* Custom Controls Overlay */}
+                <div className="video-controls-overlay">
+                  {/* Quality Selector */}
+                  <div className="quality-selector">
+                    <button
+                      className="quality-btn"
+                      onClick={() => setShowQualityMenu(!showQualityMenu)}
+                      title="Video Quality"
+                    >
+                      {currentQuality} ⚙️
+                    </button>
+                    {showQualityMenu && (
+                      <div className="quality-menu">
+                        {video.qualities && Object.keys(video.qualities).map(quality => (
+                          <button
+                            key={quality}
+                            className={`quality-option ${currentQuality === quality ? 'active' : ''}`}
+                            onClick={() => handleQualityChange(quality)}
+                          >
+                            {quality}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Volume Control */}
+                  <div className="volume-control">
+                    <button className="volume-btn" onClick={toggleMute}>
+                      {isMuted ? '🔇' : volume > 0.5 ? '🔊' : '🔉'}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
+                      className="volume-slider"
+                    />
+                  </div>
+
+                  {/* Fullscreen Button */}
+                  <button className="fullscreen-btn" onClick={toggleFullscreen}>
+                    {isFullscreen ? '🗗' : '🗖'}
+                  </button>
+                </div>
                 {videoProgress > 0 && (
                   <div style={{
                     position: 'absolute',
@@ -124,7 +247,7 @@ const VideoPlayer = ({ video, onClose }) => {
                     transition: 'width 0.1s linear'
                   }} />
                 )}
-              </>
+              </div>
             )}
           </div>
 

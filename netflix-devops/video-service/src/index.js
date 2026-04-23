@@ -20,12 +20,11 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/netflix-v
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('Video Service: SIGTERM received');
-  mongoose.connection.close(() => {
-    console.log('MongoDB connection closed');
-    process.exit(0);
-  });
+  await mongoose.connection.close();
+  console.log('MongoDB connection closed');
+  process.exit(0);
 });
 
 // Routes

@@ -5,6 +5,11 @@ const videoSchema = new mongoose.Schema({
   description: { type: String },
   thumbnail: { type: String },
   url: { type: String, required: true },
+  qualities: {
+    '480p': { type: String },
+    '720p': { type: String },
+    '1080p': { type: String }
+  },
   duration: { type: Number },
   genre: { type: String },
   rating: { type: Number },
