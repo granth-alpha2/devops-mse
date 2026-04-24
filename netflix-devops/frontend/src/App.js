@@ -79,7 +79,7 @@ function App() {
         timeout: 10000
       });
       
-      const videoData = response.data.data || response.data;
+      const videoData = response.data.videos || response.data.data || response.data;
       const videosArray = Array.isArray(videoData) ? videoData : [];
       
       setVideos(videosArray);
