@@ -6,8 +6,11 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "build": "echo \"backend has no build step\"",
     "test": "jest",
-    "lint": "eslint src/"
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/",
+    "format": "echo \"backend has no formatter configured\""
   },
   "dependencies": {
     "express": "^4.18.2",

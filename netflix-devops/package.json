@@ -4,10 +4,10 @@
   "description": "Netflix-like streaming application with DevOps infrastructure",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=apps/auth-service\" \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\" \"npm run dev --workspace=apps/video-service\"",
-    "build": "npm run build --workspace=apps/auth-service && npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend && npm run build --workspace=apps/video-service",
-    "test": "npm run test --workspace=apps/auth-service && npm run test --workspace=apps/backend && npm run test --workspace=apps/frontend && npm run test --workspace=apps/video-service",
-    "test:coverage": "npm run test:coverage --workspace=*",
+    "dev": "concurrently \"npm run dev --workspace=netflix-auth-service\" \"npm run dev --workspace=netflix-backend\" \"npm run dev --workspace=netflix-frontend\" \"npm run dev --workspace=netflix-video-service\"",
+    "build": "npm run build --workspace=netflix-auth-service && npm run build --workspace=netflix-backend && npm run build --workspace=netflix-frontend && npm run build --workspace=netflix-video-service",
+    "test": "npm run test --workspace=netflix-auth-service && npm run test --workspace=netflix-backend && npm run test --workspace=netflix-frontend && npm run test --workspace=netflix-video-service",
+    "test:coverage": "npm run test:coverage --workspace=netflix-auth-service && npm run test:coverage --workspace=netflix-backend && npm run test:coverage --workspace=netflix-frontend && npm run test:coverage --workspace=netflix-video-service",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
@@ -19,14 +19,14 @@
     "tf:plan": "cd infrastructure/terraform && terraform plan",
     "tf:apply": "cd infrastructure/terraform && terraform apply",
     "tf:destroy": "cd infrastructure/terraform && terraform destroy",
-    "lint": "npm run lint --workspace=*",
-    "format": "npm run format --workspace=*"
+    "lint": "npm run lint --workspace=netflix-auth-service && npm run lint --workspace=netflix-backend && npm run lint --workspace=netflix-frontend && npm run lint --workspace=netflix-video-service",
+    "format": "npm run format --workspace=netflix-auth-service && npm run format --workspace=netflix-backend && npm run format --workspace=netflix-frontend && npm run format --workspace=netflix-video-service"
   },
   "workspaces": [
-    "apps/auth-service",
-    "apps/backend",
-    "apps/frontend",
-    "apps/video-service"
+    "auth-service",
+    "backend",
+    "frontend",
+    "video-service"
   ],
   "devDependencies": {
     "concurrently": "^8.0.0"

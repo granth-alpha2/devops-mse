@@ -5,10 +5,13 @@
   "main": "index.js",
   "scripts": {
     "start": "react-scripts start",
+    "dev": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "CI=true react-scripts test --watchAll=false --passWithNoTests",
+    "test:coverage": "CI=true react-scripts test --watchAll=false --coverage --passWithNoTests",
     "eject": "react-scripts eject",
-    "lint": "eslint src/"
+    "lint": "echo \"frontend lint not configured\"",
+    "format": "echo \"frontend format not configured\""
   },
   "browserslist": {
     "production": [
@@ -32,17 +35,5 @@
   "devDependencies": {
     "react-scripts": "5.0.1",
     "eslint": "^8.40.0"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   }
 }

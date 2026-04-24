@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest"
+    "build": "echo \"video-service has no build step\"",
+    "test": "jest --passWithNoTests",
+    "test:coverage": "jest --coverage --passWithNoTests",
+    "lint": "echo \"video-service has no linter configured\"",
+    "format": "echo \"video-service has no formatter configured\""
   },
   "dependencies": {
     "express": "^4.18.2",

@@ -1,9 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 const VideoPlayer = ({ video, onClose }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [videoProgress, setVideoProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [currentQuality, setCurrentQuality] = useState('720p');
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -29,9 +33,18 @@ const VideoPlayer = ({ video, onClose }) => {
   }, [video]);
 
   const getCurrentVideoUrl = () => {
+    if (video?._id || video?.id) {
+      const streamUrl = `${API_URL}/stream/${video._id || video.id}`;
+      console.log('Using stream URL:', streamUrl);
+      return streamUrl;
+    }
+
     if (video.qualities && video.qualities[currentQuality]) {
+      console.log('Using quality URL:', video.qualities[currentQuality]);
       return video.qualities[currentQuality];
     }
+
+    console.log('Using direct URL:', video.url);
     return video.url;
   };
 
@@ -91,13 +104,22 @@ const VideoPlayer = ({ video, onClose }) => {
   const handlePlayClick = () => {
     setErrorMessage('');
     setIsPlaying(true);
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.focus();
+        videoRef.current.play().catch(err => {
+          console.error('Autoplay failed:', err);
+          setErrorMessage('Autoplay blocked. Click play on the video controls.');
+        });
+      }
+    }, 100);
   };
 
   const handleVideoError = (e) => {
     console.error('Video error event:', e);
     const videoElement = e.target;
     let errorMsg = 'Video failed to load';
-    
+
     if (videoElement.error) {
       switch(videoElement.error.code) {
         case videoElement.error.MEDIA_ERR_ABORTED:
@@ -116,7 +138,7 @@ const VideoPlayer = ({ video, onClose }) => {
           errorMsg = 'Unknown video error occurred';
       }
     }
-    
+
     setErrorMessage(errorMsg);
     setIsPlaying(false);
   };
@@ -125,13 +147,54 @@ const VideoPlayer = ({ video, onClose }) => {
     console.log('Video loading started for:', video.title);
   };
 
+  const handleLoadedMetadata = (e) => {
+    const durationSeconds = e.target.duration || 0;
+    setDuration(durationSeconds);
+    setCurrentTime(e.target.currentTime || 0);
+    setVideoProgress(durationSeconds ? (e.target.currentTime / durationSeconds) * 100 : 0);
+  };
+
   const handleCanPlay = () => {
     console.log('Video ready to play');
   };
 
+  const formatTime = (time) => {
+    if (isNaN(time) || time === Infinity) return '00:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const handlePlayPause = () => {
+    if (!videoRef.current) return;
+
+    if (videoRef.current.paused) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch((err) => {
+        console.error('Play failed:', err);
+        setErrorMessage('Playback blocked. Use the controls to resume.');
+      });
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const handleSeek = (seekValue) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = seekValue;
+    setCurrentTime(seekValue);
+    if (duration > 0) {
+      setVideoProgress((seekValue / duration) * 100);
+    }
+  };
+
   const handleTimeUpdate = (e) => {
     if (e.target.duration) {
-      setVideoProgress((e.target.currentTime / e.target.duration) * 100);
+      const current = e.target.currentTime;
+      setCurrentTime(current);
+      setVideoProgress((current / e.target.duration) * 100);
     }
   };
 
@@ -147,7 +210,9 @@ const VideoPlayer = ({ video, onClose }) => {
               {video.views?.toLocaleString()} views
             </p>
           </div>
-          <button className="close-btn" onClick={onClose} aria-label="Close player">✕</button>
+          <button className="close-btn" onClick={onClose} aria-label="Close player" title="Close">
+            ✕
+          </button>
         </div>
 
         <div className="video-player-body">
@@ -163,7 +228,12 @@ const VideoPlayer = ({ video, onClose }) => {
                   }} 
                 />
                 <div className="play-overlay">
-                  <button className="play-btn-large" onClick={handlePlayClick} aria-label="Play video">
+                  <button 
+                    className="play-btn-large" 
+                    onClick={handlePlayClick} 
+                    aria-label="Play video"
+                    title="Click to play video"
+                  >
                     ▶
                   </button>
                 </div>
@@ -173,142 +243,133 @@ const VideoPlayer = ({ video, onClose }) => {
                 <video
                   ref={videoRef}
                   className="video-element"
-                  controls
-                  autoPlay
                   playsInline
                   preload="metadata"
                   src={getCurrentVideoUrl()}
                   onError={handleVideoError}
                   onLoadStart={handleLoadStart}
+                  onLoadedMetadata={handleLoadedMetadata}
                   onCanPlay={handleCanPlay}
                   onTimeUpdate={handleTimeUpdate}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000' }}
-                >
-                  Your browser does not support the video tag.
-                </video>
+                />
 
-                {/* Custom Controls Overlay */}
                 <div className="video-controls-overlay">
-                  {/* Quality Selector */}
-                  <div className="quality-selector">
-                    <button
-                      className="quality-btn"
-                      onClick={() => setShowQualityMenu(!showQualityMenu)}
-                      title="Video Quality"
-                    >
-                      {currentQuality} ⚙️
-                    </button>
-                    {showQualityMenu && (
-                      <div className="quality-menu">
-                        {video.qualities && Object.keys(video.qualities).map(quality => (
-                          <button
-                            key={quality}
-                            className={`quality-option ${currentQuality === quality ? 'active' : ''}`}
-                            onClick={() => handleQualityChange(quality)}
-                          >
-                            {quality}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    className="play-pause-btn"
+                    onClick={handlePlayPause}
+                    title={isPlaying ? 'Pause video' : 'Play video'}
+                    aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                  >
+                    {isPlaying ? '❚❚' : '▶'}
+                  </button>
 
-                  {/* Volume Control */}
-                  <div className="volume-control">
-                    <button className="volume-btn" onClick={toggleMute}>
-                      {isMuted ? '🔇' : volume > 0.5 ? '🔊' : '🔉'}
-                    </button>
+                  <div className="progress-wrapper">
                     <input
                       type="range"
                       min="0"
-                      max="1"
+                      max={duration || 100}
                       step="0.1"
-                      value={isMuted ? 0 : volume}
-                      onChange={handleVolumeChange}
-                      className="volume-slider"
+                      value={currentTime}
+                      onChange={(e) => handleSeek(parseFloat(e.target.value))}
+                      className="progress-slider"
+                      title="Seek"
                     />
+                    <div className="progress-labels">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </div>
                   </div>
 
-                  {/* Fullscreen Button */}
-                  <button className="fullscreen-btn" onClick={toggleFullscreen}>
-                    {isFullscreen ? '🗗' : '🗖'}
-                  </button>
+                  <div className="video-control-group">
+                    <div className="quality-selector">
+                      <button
+                        className="quality-btn"
+                        onClick={() => setShowQualityMenu(!showQualityMenu)}
+                        title="Video Quality"
+                      >
+                        {currentQuality} ⚙️
+                      </button>
+                      {showQualityMenu && (
+                        <div className="quality-menu">
+                          {video.qualities && Object.keys(video.qualities).map(quality => (
+                            <button
+                              key={quality}
+                              className={`quality-option ${currentQuality === quality ? 'active' : ''}`}
+                              onClick={() => handleQualityChange(quality)}
+                            >
+                              {quality}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="volume-control">
+                      <button 
+                        className="volume-btn" 
+                        onClick={toggleMute}
+                        title={isMuted ? "Unmute" : "Mute"}
+                      >
+                        {isMuted ? '🔇' : volume > 0.5 ? '🔊' : '🔉'}
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={isMuted ? 0 : volume}
+                        onChange={handleVolumeChange}
+                        className="volume-slider"
+                        title="Volume"
+                      />
+                    </div>
+
+                    <button 
+                      className="fullscreen-btn" 
+                      onClick={toggleFullscreen} 
+                      title="Fullscreen"
+                    >
+                      {isFullscreen ? '🗗' : '⛶'}
+                    </button>
+                  </div>
                 </div>
-                {videoProgress > 0 && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    height: '3px',
-                    width: `${videoProgress}%`,
-                    background: 'linear-gradient(90deg, #e50914, #cc0713)',
-                    transition: 'width 0.1s linear'
-                  }} />
-                )}
               </div>
             )}
           </div>
 
           <div className="video-details-panel">
             <div className="video-details-card">
-              <h3>About This Title</h3>
+              <h3>📺 About</h3>
               <p>{video.description}</p>
               <div className="video-details-stats">
-                <span><strong>Duration:</strong> {Math.round(video.duration / 60)} minutes</span>
-                <span><strong>Genre:</strong> {video.genre}</span>
-                <span><strong>Rating:</strong> {video.rating}/10</span>
-                <span><strong>Views:</strong> {video.views?.toLocaleString() || 'N/A'}</span>
+                <span>
+                  <strong>Duration:</strong> 
+                  <span>{Math.round(video.duration / 60)} min</span>
+                </span>
+                <span>
+                  <strong>Genre:</strong> 
+                  <span>{video.genre}</span>
+                </span>
+                <span>
+                  <strong>Rating:</strong> 
+                  <span>{video.rating}/10</span>
+                </span>
+                <span>
+                  <strong>Views:</strong> 
+                  <span>{video.views?.toLocaleString() || 'N/A'}</span>
+                </span>
               </div>
               {errorMessage && (
                 <div className="video-error">
                   ⚠️ {errorMessage}
                 </div>
               )}
-              <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
                 <button 
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'linear-gradient(135deg, #e50914, #cc0713)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    marginBottom: '8px',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
-                  onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                  onClick={handlePlayClick}
-                >
-                  {isPlaying ? 'Continue Watching' : 'Play Now'}
-                </button>
-                <button 
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#fff',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.15)';
-                    e.target.style.transform = 'scale(1.02)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.transform = 'scale(1)';
-                  }}
+                  className="video-player-button video-player-button-secondary"
                   onClick={onClose}
+                  title="Close player"
                 >
-                  Close
+                  ✕ Close
                 </button>
               </div>
             </div>

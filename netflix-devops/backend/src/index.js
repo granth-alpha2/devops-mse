@@ -73,7 +73,7 @@ async function seedVideos() {
       {
         title: 'Oppenheimer',
         description: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=1',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -89,7 +89,7 @@ async function seedVideos() {
       {
         title: 'Avatar: The Way of Water',
         description: 'Jake Sully and his family must escape the Pandoran colonists on the lush moon. They explore the world of the ocean and its wonders.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=2',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -105,7 +105,7 @@ async function seedVideos() {
       {
         title: 'Killers of the Flower Moon',
         description: 'When oil is discovered beneath their land, the Osage people are murdered one by one. An FBI agent investigates these mysterious deaths.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXznH.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=3',
         url: 'https://www.w3schools.com/html/movie.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -116,12 +116,11 @@ async function seedVideos() {
         genre: 'Crime, Drama, History',
         rating: 8.3,
         year: 2023,
-        views: 3400000
       },
       {
         title: 'Barbie',
         description: 'Barbie and Ken escape from the perfect world of Barbie Land and enter the real world. They discover what happens when they exist outside their universe.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=4',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -137,7 +136,7 @@ async function seedVideos() {
       {
         title: 'Dune: Part Two',
         description: 'Paul Atreides must travel to the dangerous desert planet Arrakis to ensure the future of his family. Epic space opera with stunning visuals.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=5',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -153,7 +152,7 @@ async function seedVideos() {
       {
         title: 'Mission: Impossible - Dead Reckoning',
         description: 'Ethan Hunt and his team take on their most dangerous mission yet against an artificial intelligence threat to humanity.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/NNxYkU70HPurnNCSiCjYdd9hzW.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=6',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -164,12 +163,11 @@ async function seedVideos() {
         genre: 'Action, Adventure, Thriller',
         rating: 7.6,
         year: 2023,
-        views: 4800000
       },
       {
         title: 'Aquaman and the Lost Kingdom',
         description: 'Aquaman must unite the kingdoms of the sea to prevent an ancient enemy from destroying the world above and below the oceans.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/7lTnXOy0iNtMiIRjlFj8bQ3ZJJg.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=7',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -180,12 +178,11 @@ async function seedVideos() {
         genre: 'Action, Adventure, Fantasy',
         rating: 6.9,
         year: 2023,
-        views: 5100000
       },
       {
         title: 'The Hunger Games: Ballad of Songbirds',
         description: 'A young Coriolanus Snow becomes the mentor for a female tribute in the tenth Hunger Games tournament.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/eaiUgfhYPqqYD5bBghpL7V9XCqL.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=8',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -196,12 +193,11 @@ async function seedVideos() {
         genre: 'Action, Adventure, Drama, Sci-Fi',
         rating: 7.7,
         year: 2023,
-        views: 6200000
       },
       {
         title: 'Fast X',
         description: 'Dom Toretto and his crew face off against a cunning new adversary who emerges from the shadows of their past.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/fiVW06jE7z9YnO4trhaMEdclSiC.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=9',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -217,7 +213,7 @@ async function seedVideos() {
       {
         title: 'Inside Out 2',
         description: 'Riley enters her teenage years, and her emotions must adjust to her changing emotions and experiences of growing up.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=10',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -233,7 +229,7 @@ async function seedVideos() {
       {
         title: 'Dungeons & Dragons: Honor Among Thieves',
         description: 'A ragtag group of thieves must embark on an epic adventure to recover a magical artifact and save the kingdom.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/A7AoNT06aRAc4SV89Dwxj3EYAgC.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=11',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
@@ -249,7 +245,7 @@ async function seedVideos() {
       {
         title: 'Spider-Man: Across the Spider-Verse',
         description: 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.',
-        thumbnail: 'https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg',
+        thumbnail: 'https://picsum.photos/300/450?random=12',
         url: 'https://www.w3schools.com/html/mov_bbb.mp4',
         qualities: {
           '480p': 'https://www.w3schools.com/html/mov_bbb.mp4',
